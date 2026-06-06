@@ -1,1 +1,0 @@
-# cmi-ops-meeting-system
