@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLARMIL Manufacturing — Operations Meeting System</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --yellow: #F5C800;
+    --yellow-light: #FFE566;
+    --yellow-pale: #FFFBE0;
+    --yellow-dark: #C9A200;
+    --green: #1D6B2E;
+    --green-mid: #2A8C3F;
+    --green-light: #3AAF54;
+    --green-pale: #E8F5EB;
+    --bg: #FAFAF2;
+    --surface: #FFFFFF;
+    --border: #E8E0B0;
+    --text: #1A1A0F;
+    --text-muted: #5A5A3A;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* topbar ito */
+  .topbar {
+    background: linear-gradient(135deg, var(--green) 0%, var(--green-mid) 60%, #1A5A28 100%);
+    color: #fff;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 14px; }
+  .topbar-logo { width: 46px; height: 46px; border-radius: 50%; border: 2.5px solid var(--yellow); object-fit: cover; }
+  .topbar-brand { display: flex; flex-direction: column; }
+  .topbar-brand span:first-child { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: 1.5px; color: var(--yellow); line-height: 1; }
+  .topbar-brand span:last-child { font-size: 10px; color: rgba(255,255,255,0.75); letter-spacing: 2px; text-transform: uppercase; }
+  .topbar-center { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 700; letter-spacing: 1.5px; color: rgba(255,255,255,0.9); text-transform: uppercase; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .live-badge { background: var(--yellow); color: var(--green); font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; letter-spacing: 1px; display: flex; align-items: center; gap: 5px; }
+  .live-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.85)} }
+  .clock-display { font-family: 'DM Mono', monospace; font-size: 13px; color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 6px; }
+
+  /* sidebar and layout naman here */
+  .layout { display: flex; min-height: calc(100vh - 64px); }
+  .sidebar {
+    width: 210px; min-height: calc(100vh - 64px); background: linear-gradient(180deg, #163F22 0%, #1D6B2E 100%);
+    padding: 18px 0; position: sticky; top: 64px; height: calc(100vh - 64px); overflow-y: auto; flex-shrink: 0;
+  }
+  .sidebar-section { font-size: 9px; font-weight: 700; letter-spacing: 2px; color: var(--yellow-dark); text-transform: uppercase; padding: 14px 18px 5px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 18px; cursor: pointer; transition: all .15s; font-size: 13px; color: rgba(255,255,255,0.75); font-weight: 500; }
+  .nav-item:hover, .nav-item.active { background: rgba(245,200,0,.13); color: var(--yellow); border-left: 3px solid var(--yellow); }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .main { flex: 1; padding: 24px; max-width: 1200px; }
+
+  /* sections page */
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn .25s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+  /* cards */
+  .card { background: var(--surface); border-radius: var(--radius); border: 1.5px solid var(--border); padding: 20px; margin-bottom: 18px; box-shadow: var(--shadow); }
+  .card-title { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: .8px; color: var(--green); text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .card-title .badge { background: var(--yellow); color: var(--green); font-size: 10px; padding: 2px 8px; border-radius: 12px; font-family: 'Inter', sans-serif; font-weight: 700; }
+
+  /* kpi */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
+  .kpi-card { background: var(--surface); border-radius: var(--radius); padding: 16px 18px; border: 1.5px solid var(--border); box-shadow: var(--shadow); position: relative; overflow: hidden; }
+  .kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; }
+  .kpi-card.safety::before { background: var(--green); }
+  .kpi-card.quality::before { background: #E07B00; }
+  .kpi-card.productivity::before { background: #1565C0; }
+  .kpi-card.cost::before { background: #7B1FA2; }
+  .kpi-label { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+  .kpi-value { font-family: 'Barlow Condensed', sans-serif; font-size: 32px; font-weight: 800; line-height: 1; color: var(--text); }
+  .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+  /* pilklars */
+  .pillar-tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+  .pillar-tab { padding: 7px 18px; border-radius: 6px; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border: 2px solid transparent; transition: all .15s; }
+  .pillar-tab.safety { background: var(--green-pale); color: var(--green); border-color: var(--green-light); }
+  .pillar-tab.quality { background: #FFF3E0; color: #BF5000; border-color: #E07B00; }
+  .pillar-tab.productivity { background: #E3F2FD; color: #0D47A1; border-color: #1565C0; }
+  .pillar-tab.cost { background: #F3E5F5; color: #6A1B9A; border-color: #7B1FA2; }
+  .pillar-tab.active, .pillar-tab:hover { opacity: 1; filter: brightness(1); transform: translateY(-1px); box-shadow: var(--shadow); }
+
+  /* it is to form grids */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label { font-size: 11px; font-weight: 600; letter-spacing: .5px; color: var(--text-muted); text-transform: uppercase; }
+  .form-group input, .form-group select, .form-group textarea {
+    border: 1.5px solid var(--border); border-radius: 7px; padding: 9px 12px; font-size: 13px; font-family: 'Inter', sans-serif;
+    background: var(--yellow-pale); transition: all .15s; color: var(--text);
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--yellow-dark); box-shadow: 0 0 0 3px rgba(245,200,0,.2); background: #fff; }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+
+  /* buttons */
+  .btn { padding: 9px 20px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; display: inline-flex; align-items: center; gap: 7px; }
+  .btn-primary { background: linear-gradient(135deg, var(--yellow), var(--yellow-dark)); color: var(--green); box-shadow: 0 2px 8px rgba(245,200,0,.4); }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(245,200,0,.5); }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-green:hover { background: var(--green-mid); }
+  .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-muted); }
+  .btn-outline:hover { border-color: var(--yellow-dark); color: var(--text); }
+  .btn-danger { background: #FFEBEE; color: #C62828; border: 1.5px solid #EF9A9A; }
+  .btn-danger:hover { background: #FFCDD2; }
+  .btn-sm { padding: 5px 12px; font-size: 11px; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
+  /* tables */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { background: linear-gradient(135deg, var(--green), var(--green-mid)); color: var(--yellow); font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; padding: 11px 12px; text-align: left; white-space: nowrap; }
+  td { padding: 9px 12px; border-bottom: 1px solid #F0ECC0; color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--yellow-pale); }
+  .status-badge { padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
+  .status-open { background: #FFF3E0; color: #BF5000; }
+  .status-closed { background: var(--green-pale); color: var(--green); }
+  .status-pending { background: #E3F2FD; color: #0D47A1; }
+
+  /* alerts and concern */
+  .concern-item { border-radius: 8px; padding: 12px 15px; margin-bottom: 10px; border-left: 4px solid; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .concern-item.safety { border-color: var(--green); background: var(--green-pale); }
+  .concern-item.quality { border-color: #E07B00; background: #FFF3E0; }
+  .concern-item.productivity { border-color: #1565C0; background: #E3F2FD; }
+  .concern-item.cost { border-color: #7B1FA2; background: #F3E5F5; }
+  .concern-text { font-size: 13px; font-weight: 500; }
+  .concern-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+  /* modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 14px; padding: 28px; max-width: 580px; width: 90%; box-shadow: var(--shadow-lg); }
+  .modal-header { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; color: var(--green); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px; }
+  #qr-container { display: flex; justify-content: center; padding: 18px; background: var(--yellow-pale); border-radius: 10px; margin: 14px 0; }
+
+  /* search bar */
+  .search-bar { display: flex; gap: 10px; margin-bottom: 16px; }
+  .search-bar input { flex: 1; }
+  .search-bar select { width: 150px; }
+
+  /* date of history ito */
+  .history-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 8px; border: 1.5px solid var(--border); margin-bottom: 8px; cursor: pointer; transition: all .15s; background: var(--surface); }
+  .history-item:hover { border-color: var(--yellow-dark); background: var(--yellow-pale); }
+  .history-date { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-muted); min-width: 100px; }
+  .history-pillars { display: flex; gap: 5px; flex-wrap: wrap; }
+  .pillar-mini { padding: 2px 7px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+
+  /* charts */
+  .chart-placeholder { background: var(--yellow-pale); border-radius: 10px; height: 180px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--text-muted); border: 2px dashed var(--border); font-family: 'DM Mono', monospace; }
+
+  /* scanner */
+  .scanner-box { background: #1A1A1A; border-radius: 10px; padding: 20px; color: #fff; text-align: center; }
+  .scanner-frame { width: 200px; height: 200px; border: 3px solid var(--yellow); border-radius: 10px; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+  .scanner-line { position: absolute; width: 100%; height: 3px; background: var(--yellow); animation: scan 2s linear infinite; box-shadow: 0 0 10px var(--yellow); }
+  @keyframes scan { 0%{top:0} 100%{top:100%} }
+
+  /* this part is for notifs */
+  .notif-bar { position: fixed; bottom: 20px; right: 20px; background: var(--green); color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow-lg); z-index: 300; transform: translateY(80px); opacity: 0; transition: all .3s; display: flex; align-items: center; gap: 8px; }
+  .notif-bar.show { transform: translateY(0); opacity: 1; }
+
+  /* pillar panels */
+  .pillar-panel { display: none; }
+  .pillar-panel.active { display: block; }
+
+  /* dividers */
+  .divider { border: none; border-top: 1.5px solid var(--border); margin: 16px 0; }
+
+  /* header per page */
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .page-title { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 800; color: var(--green); text-transform: uppercase; letter-spacing: 1px; }
+  .page-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* highlight (green) */
+  .highlight-row { background: var(--yellow-pale); border: 1.5px solid var(--yellow-dark); border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 12px; font-size: 13px; }
+  .highlight-row strong { color: var(--green); }
+
+  /* 3rd grid */
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+  /* responsive */
+  @media(max-width:900px) { .kpi-grid{grid-template-columns:1fr 1fr} .grid-3{grid-template-columns:1fr 1fr} .form-grid.three{grid-template-columns:1fr 1fr} }
+  @media(max-width:680px) { .sidebar{display:none} .kpi-grid{grid-template-columns:1fr 1fr} .topbar-center{display:none} }
+
+  /* for print tab */
+  @media print { .topbar,.sidebar,.btn,.pillar-tabs{display:none!important} .main{padding:0} .card{border:1px solid #ddd} }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #f0f0e8; }
+  ::-webkit-scrollbar-thumb { background: var(--yellow-dark); border-radius: 6px; }
+
+  /* dashboard for trends */
+  .trend-up { color: #1D6B2E; font-weight: 700; }
+  .trend-down { color: #C62828; font-weight: 700; }
+
+  /* attendance table */
+  .attendance-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 10px; }
+  .att-card { border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 12px; text-align: center; cursor: pointer; transition: all .15s; }
+  .att-card.present { background: var(--green-pale); border-color: var(--green-light); }
+  .att-card.absent { background: #FFEBEE; border-color: #EF9A9A; }
+  .att-card .att-name { font-size: 12px; font-weight: 600; }
+  .att-card .att-dept { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+  .att-card .att-status { font-size: 10px; font-weight: 700; margin-top: 5px; text-transform: uppercase; letter-spacing: .5px; }
+  .att-card.present .att-status { color: var(--green); }
+  .att-card.absent .att-status { color: #C62828; }
+</style>
+</head>
+<body>
+
+<!-- topbar div -->
+<div class="topbar">
+  <div class="topbar-left">
+    <img class="topbar-logo" src="data:image/jpeg;base64,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" alt="CLARMIL Logo">
+    <div class="topbar-brand">
+      <span>CLARMIL</span>
+      <span>Manufacturing Inc.</span>
+    </div>
+  </div>
+  <div class="topbar-center">Operations Meeting System</div>
+  <div class="topbar-right">
+    <div class="live-badge"><span class="live-dot"></span>LIVE</div>
+    <div class="clock-display" id="clock">--:--:--</div>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- sidebar div -->
+  <div class="sidebar">
+    <div class="sidebar-section">Main</div>
+    <div class="nav-item active" onclick="navigate('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="navigate('entry')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Data Entry
+    </div>
+    <div class="nav-item" onclick="navigate('records')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Daily Records
+    </div>
+    <div class="nav-item" onclick="navigate('concerns')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Concerns Log
+    </div>
+    <div class="nav-item" onclick="navigate('attendance')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      Attendance
+    </div>
+    <div class="sidebar-section">Tools</div>
+    <div class="nav-item" onclick="navigate('qr')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><path d="M21 16h-3v3h3M14 3v5h5M16 21h1v-4M14 14h.01M17 14h.01M20 14h.01M14 17h.01M14 20h.01M17 20h.01"/></svg>
+      QR Generator
+    </div>
+    <div class="nav-item" onclick="navigate('analytics')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Analytics
+    </div>
+    <div class="nav-item" onclick="navigate('export')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export / Print
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- ==================== laman ng dashboard (need pa baguhin) ==================== -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Operations Dashboard</div>
+          <div class="page-subtitle" id="dash-date-display">Loading current date...</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-outline btn-sm" onclick="navigate('entry')">+ New Entry</button>
+          <button class="btn btn-primary btn-sm" onclick="printReport()">🖨 Print Report</button>
+        </div>
+      </div>
+
+      <!-- kpi cards -->
+      <div class="kpi-grid" id="kpi-grid">
+        <div class="kpi-card safety">
+          <div class="kpi-label">Safety — Safe Man-Hrs</div>
+          <div class="kpi-value" id="kpi-safe-mh">—</div>
+          <div class="kpi-sub" id="kpi-safe-sub">YTD | LTI: — | MTI: — | FAI: —</div>
+        </div>
+        <div class="kpi-card quality">
+          <div class="kpi-label">Quality — Validated Complaints</div>
+          <div class="kpi-value" id="kpi-complaints">—</div>
+          <div class="kpi-sub" id="kpi-quality-sub">%Closure: — | NCR: —</div>
+        </div>
+        <div class="kpi-card productivity">
+          <div class="kpi-label">Productivity — Target Achievement</div>
+          <div class="kpi-value" id="kpi-prod">—</div>
+          <div class="kpi-sub" id="kpi-prod-sub">GRP: — | PCS/MNHR: G —</div>
+        </div>
+        <div class="kpi-card cost">
+          <div class="kpi-label">Cost — Basecakes Yield</div>
+          <div class="kpi-value" id="kpi-yield">—</div>
+          <div class="kpi-sub" id="kpi-cost-sub">%DM: — | %DL: — | %OT: —</div>
+        </div>
+      </div>
+
+      <!-- highlights -->
+      <div class="highlight-row">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D6B2E" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <div id="dash-highlights-text"><strong>Today's Meeting Highlights:</strong> No entry saved yet.</div>
+      </div>
+
+      <!-- summary of all concerns (need pa rin iimprove ng kaunti) -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card">
+          <div class="card-title">Active Concerns <span class="badge" id="concern-count">0</span></div>
+          <div id="dash-concerns-list"><p style="color:var(--text-muted);font-size:13px;">No concerns logged yet. Use the Concerns Log to add items.</p></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Today's Actions</div>
+          <div id="dash-actions-list">
+            <div class="concern-item safety">
+              <div>
+                <div class="concern-text">MFTO Permit — Pending</div>
+                <div class="concern-meta">Safety · Compliance</div>
+              </div>
+              <span class="status-badge status-pending">Pending</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- quick metrics -->
+      <div class="card" style="margin-top:0;">
+        <div class="card-title">Process Quality Parameters</div>
+        <div class="grid-3" style="gap:10px;">
+          <div style="background:var(--yellow-pale);border-radius:8px;padding:12px;border:1.5px solid var(--border);">
+            <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;">Egg Yolk</div>
+            <div id="dash-eggyolk-val" style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--text);">—</div>
+            <div id="dash-eggyolk-status" style="font-size:11px;color:var(--text-muted);">Target: 0.90 – 1.10</div>
+          </div>
+          <div id="dash-eggwhite-card" style="background:var(--yellow-pale);border-radius:8px;padding:12px;border:1.5px solid var(--border);">
+            <div id="dash-eggwhite-label" style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;">Egg White</div>
+            <div id="dash-eggwhite-val" style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--text);">—</div>
+            <div id="dash-eggwhite-status" style="font-size:11px;color:var(--text-muted);">Target: 0.18 – 0.22</div>
+          </div>
+          <div style="background:var(--green-pale);border-radius:8px;padding:12px;border:1.5px solid var(--green-light);">
+            <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--green);text-transform:uppercase;margin-bottom:6px;">Fold In</div>
+            <div id="dash-foldin-val" style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--green);">—</div>
+            <div id="dash-foldin-status" style="font-size:11px;color:var(--green);">Target: 0.38 – 0.40</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== input of datas ==================== -->
+    <div id="page-entry" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Daily Data Entry</div>
+          <div class="page-subtitle">Encode the four pillars for today's operations meeting</div>
+        </div>
+        <button class="btn btn-primary" onclick="saveEntry()">💾 Save Entry</button>
+      </div>
+
+      <div class="card">
+        <div class="form-grid three" style="margin-bottom:16px;">
+          <div class="form-group">
+            <label>Meeting Date</label>
+            <input type="date" id="entry-date">
+          </div>
+          <div class="form-group">
+            <label>Shift</label>
+            <select id="entry-shift">
+              <option>Day Shift</option>
+              <option>Night Shift</option>
+              <option>Mid Shift</option>
+              <option>All Shifts</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Prepared By</label>
+            <input type="text" id="entry-prepby" placeholder="">
+          </div>
+        </div>
+      </div>
+
+      <div class="pillar-tabs">
+        <div class="pillar-tab safety active" onclick="switchPillar('safety',this)">🛡 Safety</div>
+        <div class="pillar-tab quality" onclick="switchPillar('quality',this)">✅ Quality</div>
+        <div class="pillar-tab productivity" onclick="switchPillar('productivity',this)">⚡ Productivity</div>
+        <div class="pillar-tab cost" onclick="switchPillar('cost',this)">💰 Cost</div>
+      </div>
+
+      <!-- panel safety -->
+      <div id="panel-safety" class="pillar-panel active">
+        <div class="card">
+          <div class="card-title">🛡 Safety Metrics</div>
+
+          <div style="background:var(--yellow-pale);border-radius:8px;padding:14px 16px;margin-bottom:16px;border:1.5px solid var(--yellow-dark);">
+            <div style="font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--green);margin-bottom:10px;">📅 YTD — Year to Date</div>
+            <div class="form-grid three">
+              <div class="form-group"><label>Safe Man-Hours</label><input type="text" id="s-manhrs" placeholder=""></div>
+              <div class="form-group"><label>No. of Observations</label><input type="number" id="s-obs" placeholder=""></div>
+              <div class="form-group"><label>% Closure</label><input type="text" id="s-closure" placeholder=""></div>
+              <div class="form-group"><label>LTI Count</label><input type="number" id="s-lti" placeholder=""></div>
+              <div class="form-group"><label>MTI Count</label><input type="number" id="s-mti" placeholder=""></div>
+              <div class="form-group"><label>FAI Count</label><input type="number" id="s-fai" placeholder=""></div>
+              <div class="form-group"><label>Damage to Property</label><input type="text" id="s-dtp" placeholder=""></div>
+              <div class="form-group"><label>Near Miss</label><input type="text" id="s-nearmiss" placeholder=""></div>
+              <div class="form-group"><label>Permits Status</label><input type="text" id="s-permits" placeholder=""></div>
+              <div class="form-group"><label>NTE Issued</label><input type="text" id="s-nte-issued" placeholder=""></div>
+              <div class="form-group"><label>NTE Closure</label><input type="text" id="s-nte-closure" placeholder=""></div>
+              <div class="form-group"><label>Shift Change</label><input type="text" id="s-shiftchange" placeholder=""></div>
+            </div>
+          </div>
+
+          <div style="background:var(--green-pale);border-radius:8px;padding:14px 16px;margin-bottom:16px;border:1.5px solid var(--green-light);">
+            <div style="font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--green);margin-bottom:10px;">📋 Schedules & Projects</div>
+            <div class="form-grid three">
+              <div class="form-group"><label>CEHS Audit Schedule</label><input type="text" id="s-cehs" placeholder=""></div>
+              <div class="form-group"><label>Project / Notes</label><input type="text" id="s-project" placeholder=""></div>
+              <div class="form-group"><label>People Concerns</label><input type="text" id="s-people" placeholder=""></div>
+            </div>
+          </div>
+
+          <hr class="divider">
+          <div class="form-group">
+            <label>⚠ Concerns for Safety</label>
+            <textarea id="s-concerns" placeholder=""></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-quality" class="pillar-panel">
+        <div class="card">
+          <div class="card-title">✅ Quality Metrics</div>
+
+          <div style="background:var(--yellow-pale);border-radius:8px;padding:14px 16px;margin-bottom:16px;border:1.5px solid var(--yellow-dark);">
+            <div style="font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#BF5000;margin-bottom:10px;">📅 YTD — Year to Date</div>
+            <div class="form-grid three">
+              <div class="form-group"><label>Validated Complaints</label><input type="number" id="q-complaints" placeholder=""></div>
+              <div class="form-group"><label>% Plant (out of total)</label><input type="text" id="q-pct-plant" placeholder=""></div>
+              <div class="form-group"><label>% Log (out of total)</label><input type="text" id="q-pct-log" placeholder=""></div>
+              <div class="form-group"><label>NCR</label><input type="number" id="q-ncr" placeholder=""></div>
+              <div class="form-group"><label>% Closure (NCR)</label><input type="text" id="q-closure" placeholder=""></div>
+              <div class="form-group"><label>IPM Incidents / Target</label><input type="text" id="q-ipm" placeholder=""></div>
+              <div class="form-group"><label>IPM % Closure</label><input type="text" id="q-ipm-closure" placeholder=""></div>
+              <div class="form-group"><label>Facility Inspection</label><input type="text" id="q-facility" placeholder=""></div>
+              <div class="form-group"><label>Facility Inspection % Closure</label><input type="text" id="q-facility-closure" placeholder=""></div>
+            </div>
+          </div>
+
+          <div style="background:#FFF3E0;border-radius:8px;padding:14px 16px;margin-bottom:16px;border:1.5px solid #FFE0B2;">
+            <div style="font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#BF5000;margin-bottom:10px;">📆 MTD — Month to Date</div>
+            <div class="form-grid three">
+              <div class="form-group"><label>% Spoilage</label><input type="text" id="q-spoilage" placeholder=""></div>
+              <div class="form-group"><label>Basecakes Rejection (kgs)</label><input type="number" id="q-bc-reject" placeholder=""></div>
+              <div class="form-group"><label>Raw Mats Rejection (kgs)</label><input type="number" id="q-rm-reject" placeholder=""></div>
+            </div>
+          </div>
+
+          <div style="background:#FFF8F0;border-radius:8px;padding:14px 16px;margin-bottom:16px;border:1.5px solid #E07B00;">
+            <div style="font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#BF5000;margin-bottom:10px;">🕐 24 HRS</div>
+            <div class="form-grid three">
+              <div class="form-group"><label>Pest Sightings</label><input type="text" id="q-pest" placeholder=""></div>
+            </div>
+            <div style="margin-top:10px;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#BF5000;margin-bottom:8px;">SG Process Parameters (Standard Range)</div>
+              <div class="form-grid three">
+                <div class="form-group"><label>Egg Yolk (Target: 0.90–1.10)</label><input type="number" step="0.01" id="q-eggyolk" placeholder=""></div>
+                <div class="form-group"><label>Egg White (Target: 0.18–0.22)</label><input type="number" step="0.01" id="q-eggwhite" placeholder=""></div>
+                <div class="form-group"><label>Fold In (Target: 0.38–0.40)</label><input type="number" step="0.01" id="q-foldin" placeholder=""></div>
+                <div class="form-group"><label>% Pan Washed</label><input type="text" id="q-pan-washed" placeholder=""></div>
+              </div>
+            </div>
+          </div>
+
+          <hr class="divider">
+          <div class="form-group">
+            <label>⚠ Concerns for Quality</label>
+            <textarea id="q-concerns" placeholder=""></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-productivity" class="pillar-panel">
+        <div class="card">
+          <div class="card-title">⚡ Productivity Metrics</div>
+
+          <div style="background:#E3F2FD;border-radius:8px;padding:14px 16px;margin-bottom:16px;border:1.5px solid #1565C0;">
+            <div style="font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#0D47A1;margin-bottom:10px;">🕐 24 HRS</div>
+
+            <div style="margin-bottom:12px;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#0D47A1;margin-bottom:8px;">Target Achievement</div>
+              <div class="form-grid three">
+                <div class="form-group"><label>G — Greetings</label><input type="text" id="p-ta-g" placeholder=""></div>
+                <div class="form-group"><label>R — Rolls</label><input type="text" id="p-ta-r" placeholder=""></div>
+                <div class="form-group"><label>P — Premium</label><input type="text" id="p-target" placeholder=""></div>
+                <div class="form-group"><label>C — Chiffon</label><input type="text" id="p-ta-c" placeholder=""></div>
+                <div class="form-group"><label>S — Sponge</label><input type="text" id="p-ta-s" placeholder=""></div>
+                <div class="form-group"><label>GRP (avg of G, R, P)</label><input type="text" id="p-grp" placeholder=""></div>
+              </div>
+            </div>
+
+            <div style="margin-bottom:12px;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#0D47A1;margin-bottom:8px;">Basecakes Buffer</div>
+              <div class="form-grid three">
+                <div class="form-group"><label>G — Greetings</label><input type="number" id="p-buf-g" placeholder=""></div>
+                <div class="form-group"><label>P — Premium</label><input type="number" id="p-buf-p" placeholder=""></div>
+                <div style="grid-column:1/-1;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#0D47A1;margin-top:8px;">Agency</div>
+                <div class="form-group"><label>B-MIRK</label><input type="text" id="p-bmirk" placeholder=""></div>
+                <div class="form-group"><label>EXPEDISE</label><input type="text" id="p-expedise" placeholder=""></div>
+              </div>
+            </div>
+
+            <!-- pieces per manhour na here -->
+            <div style="margin-bottom:12px;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#0D47A1;margin-bottom:8px;">PCS / MNHR</div>
+              <div class="form-grid three">
+                <div class="form-group"><label>G — Greetings</label><input type="number" step="0.01" id="p-pcs-g" placeholder=""></div>
+                <div class="form-group"><label>R — Rolls</label><input type="number" step="0.01" id="p-pcs-r" placeholder=""></div>
+                <div class="form-group"><label>P — Premium</label><input type="number" step="0.01" id="p-pcs-p" placeholder=""></div>
+                <div class="form-group"><label>C — Chiffon</label><input type="number" step="0.01" id="p-pcs-c" placeholder=""></div>
+                <div class="form-group"><label>S — Sponge</label><input type="number" step="0.01" id="p-pcs-s" placeholder=""></div>
+                <div class="form-group"><label>GRP</label><input type="text" id="p-pcs-grp" placeholder=""></div>
+              </div>
+            </div>
+
+            <!-- Downtime -->
+            <div style="margin-bottom:12px;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#0D47A1;margin-bottom:8px;">Downtime</div>
+              <div class="form-grid three">
+                <div class="form-group"><label>G — Greetings (hrs / pcs)</label><input type="text" id="p-dt-g" placeholder=""></div>
+                <div class="form-group"><label>R — Rolls</label><input type="text" id="p-dt-r" placeholder=""></div>
+                <div class="form-group"><label>P — Premium (hrs / pcs)</label><input type="text" id="p-dt-p" placeholder=""></div>
+                <div class="form-group"><label>BL1</label><input type="text" id="p-bl1" placeholder=""></div>
+                <div class="form-group"><label>BL2</label><input type="text" id="p-bl2" placeholder=""></div>
+              </div>
+            </div>
+
+            <!-- Variance & CP Support (separate from downtime) -->
+            <div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#0D47A1;margin-bottom:8px;">Variance &amp; CP Support</div>
+              <div class="form-grid">
+                <div class="form-group"><label>Variance</label><input type="text" id="p-variance" placeholder=""></div>
+                <div class="form-group"><label>CP Support</label><input type="text" id="p-cp-support" placeholder=""></div>
+              </div>
+            </div>
+          </div>
+
+          <hr class="divider">
+          <div class="form-group">
+            <label>⚠ Concerns for Productivity</label>
+            <textarea id="p-concerns" placeholder=""></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- panel for cost -->
+      <div id="panel-cost" class="pillar-panel">
+        <div class="card">
+          <div class="card-title">💰 Cost Metrics</div>
+
+          <div style="background:#F3E5F5;border-radius:8px;padding:14px 16px;margin-bottom:16px;border:1.5px solid #CE93D8;">
+            <div style="font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#6A1B9A;margin-bottom:10px;">📆 MTD — Month to Date</div>
+            <div class="form-grid three">
+              <div class="form-group"><label>% DM (Direct Materials)</label><input type="text" id="c-dm" placeholder=""></div>
+              <div class="form-group"><label>% DL (Direct Labor)</label><input type="text" id="c-dl" placeholder=""></div>
+              <div class="form-group"><label>% OT (Overtime)</label><input type="text" id="c-ot" placeholder=""></div>
+            </div>
+          </div>
+
+          <div style="background:#F9F0FF;border-radius:8px;padding:14px 16px;margin-bottom:16px;border:1.5px solid #7B1FA2;">
+            <div style="font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#6A1B9A;margin-bottom:10px;">🕐 24 HRS</div>
+            <div class="form-grid three">
+              <div class="form-group"><label>Basecakes Yield</label><input type="text" id="c-bc-yield" placeholder=""></div>
+              <div class="form-group"><label>Egg Cracking Yield</label><input type="text" id="c-ec-yield" placeholder=""></div>
+            </div>
+            <div style="margin-top:12px;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6A1B9A;margin-bottom:8px;">OTD Last 24 hrs — Target: 97%</div>
+              <div class="form-grid three">
+                <div class="form-group"><label>CMI</label><input type="text" id="c-otd-cmi" placeholder=""></div>
+                <div class="form-group"><label>CP</label><input type="text" id="c-otd-cp" placeholder=""></div>
+                <div class="form-group"><label>BP</label><input type="text" id="c-otd-bp" placeholder=""></div>
+                <div class="form-group"><label>OTA</label><input type="text" id="c-otd-ota" placeholder=""></div>
+                <div class="form-group"><label>OBC</label><input type="text" id="c-otd-obc" placeholder=""></div>
+              </div>
+            </div>
+          </div>
+
+          <hr class="divider">
+          <div class="form-group">
+            <label>⚠ Concerns for Cost</label>
+            <textarea id="c-concerns" placeholder=""></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveEntry()">💾 Save Meeting Record</button>
+        <button class="btn btn-outline" onclick="clearEntry()">🗑 Clear Form</button>
+      </div>
+    </div>
+
+    <!-- ==================== daily records section ==================== -->
+    <div id="page-records" class="page">
+      <div class="page-header">
+        <div class="page-title">Daily Records Archive</div>
+        <div style="display:flex;gap:8px;">
+          <input type="month" id="filter-month" style="border:1.5px solid var(--border);border-radius:7px;padding:6px 12px;font-family:'Inter',sans-serif;font-size:13px;background:var(--yellow-pale);" onchange="renderRecords()">
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Meeting Records by Date</div>
+        <div id="records-list"><p style="color:var(--text-muted);font-size:13px;padding:10px 0;">No records found. Save daily entries to see them here.</p></div>
+      </div>
+      <div id="record-detail" class="card" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div class="card-title" id="detail-title">Record Detail</div>
+          <button class="btn btn-outline btn-sm" onclick="document.getElementById('record-detail').style.display='none'">✕ Close</button>
+        </div>
+        <div id="detail-body"></div>
+      </div>
+    </div>
+
+    <!-- ==================== concerns log (need pa rin irevise) ==================== -->
+    <div id="page-concerns" class="page">
+      <div class="page-header">
+        <div class="page-title">Concerns Log</div>
+        <button class="btn btn-primary" onclick="openConcernModal()">+ Add Concern</button>
+      </div>
+
+      <div class="search-bar">
+        <div class="form-group" style="flex:1;margin-bottom:0;"><input type="text" id="concern-search" placeholder="" oninput="filterConcerns()"></div>
+        <select id="concern-filter-pillar" style="border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px;background:var(--yellow-pale);" onchange="filterConcerns()">
+          <option value="">All Pillars</option>
+          <option>Safety</option><option>Quality</option><option>Productivity</option><option>Cost</option>
+        </select>
+        <select id="concern-filter-status" style="border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px;background:var(--yellow-pale);" onchange="filterConcerns()">
+          <option value="">All Status</option>
+          <option>Open</option><option>Closed</option><option>Pending</option>
+        </select>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table id="concern-table">
+            <thead><tr>
+              <th>Date</th><th>Pillar</th><th>Description</th><th>Action Taken</th><th>PIC</th><th>Target Date</th><th>Status</th><th>Action</th>
+            </tr></thead>
+            <tbody id="concern-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== attendance ==================== -->
+    <div id="page-attendance" class="page">
+      <div class="page-header">
+        <div class="page-title">Meeting Attendance</div>
+        <div style="display:flex;gap:8px;">
+          <input type="date" id="att-date" style="border:1.5px solid var(--border);border-radius:7px;padding:7px 12px;font-size:13px;background:var(--yellow-pale);">
+          <button class="btn btn-primary btn-sm" onclick="saveAttendance()">Save Attendance</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Attendance <span class="badge" id="att-present-count">0 present</span></span>
+          <button class="btn btn-outline btn-sm" onclick="resetAttendees()">↺ Reset to Defaults</button>
+        </div>
+        <div class="attendance-grid" id="att-grid"></div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-title">Add New Attendee</div>
+        <div class="form-grid three">
+          <div class="form-group"><label>Name</label><input type="text" id="att-new-name" placeholder=""></div>
+          <div class="form-group"><label>Department</label><input type="text" id="att-new-dept" placeholder=""></div>
+          <div class="form-group"><label>Role</label><input type="text" id="att-new-role" placeholder=""></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-green btn-sm" onclick="addAttendee()">+ Add Attendee</button></div>
+  
+      <div class="card" style="margin-top:16px;">
+        <div class="card-title">Daily Attendance Records</div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Present</th>
+                <th>Absent</th>
+                <th>Saved Time</th>
+              </tr>
+            </thead>
+            <tbody id="attendance-history-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+    </div>
+
+    <!-- ==================== qr pinaka malaking revision ==================== -->
+    <div id="page-qr" class="page">
+      <div class="page-header"><div class="page-title">QR Code Generator</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+        <div class="card">
+          <div class="card-title">Generate QR Code</div>
+          <div class="form-grid" style="grid-template-columns:1fr;">
+            <div class="form-group">
+              <label>QR Type</label>
+              <select id="qr-type" onchange="updateQRPreview()">
+                <option value="meeting">Today's Meeting Summary</option>
+                <option value="custom">Custom Text / URL</option>
+                <option value="concern">Specific Concern</option>
+              </select>
+            </div>
+            <div class="form-group" id="qr-custom-wrap" style="display:none;">
+              <label>Custom Content</label>
+              <textarea id="qr-custom" placeholder="" rows="3" oninput="updateQRPreview()"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Label</label>
+              <input type="text" id="qr-label" placeholder="" oninput="updateQRPreview()">
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="generateQR()">Generate QR</button>
+            <button class="btn btn-outline" onclick="downloadQR()">⬇ Download</button>
+          </div>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div class="card-title">Preview</div>
+          <div id="qr-output" style="display:flex;justify-content:center;align-items:center;flex-direction:column;padding:20px;background:var(--yellow-pale);border-radius:10px;min-height:220px;">
+            <div id="qrcode" style="background:#fff;padding:12px;border-radius:8px;"></div>
+            <div id="qr-label-display" style="margin-top:12px;font-size:12px;font-weight:600;color:var(--green);font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;text-transform:uppercase;"></div>
+          </div>
+          <div style="margin-top:12px;">
+            <div class="scanner-box">
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;margin-bottom:12px;color:var(--yellow);">SCAN QR CODE</div>
+              <div class="scanner-frame">
+                <div class="scanner-line"></div>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(245,200,0,.4)" stroke-width="1.5"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/></svg>
+              </div>
+              <div style="font-size:11px;color:rgba(255,255,255,.6);">Point camera at QR code to scan</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== analytics, may pinaka malaking revision din ==================== -->
+    <div id="page-analytics" class="page">
+      <div class="page-header"><div class="page-title">Analytics & Trends</div></div>
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title">Safety Trend</div>
+          <canvas id="chart-safety" width="300" height="180"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">Quality Trend</div>
+          <canvas id="chart-quality" width="300" height="180"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">Productivity Trend</div>
+          <canvas id="chart-productivity" width="300" height="180"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Summary Statistics</div>
+        <div id="analytics-stats" style="color:var(--text-muted);font-size:13px;">Save daily records to see analytics.</div>
+      </div>
+    </div>
+
+    <!-- ==================== export ==================== -->
+    <div id="page-export" class="page">
+      <div class="page-header"><div class="page-title">Export & Print</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+        <div class="card">
+          <div class="card-title">Export Options</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <button class="btn btn-primary" onclick="exportCSV()">📄 Export as CSV</button>
+            <button class="btn btn-green" onclick="exportJSON()">📦 Export as JSON</button>
+            <button class="btn btn-outline" onclick="printReport()">🖨 Print Report</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Date Range Filter</div>
+          <div class="form-grid">
+            <div class="form-group"><label>From</label><input type="date" id="exp-from"></div>
+            <div class="form-group"><label>To</label><input type="date" id="exp-to"></div>
+          </div>
+          <div class="btn-row"><button class="btn btn-primary btn-sm" onclick="exportFiltered()">Export Range</button></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end .main -->
+</div><!-- end .layout -->
+
+<!-- modal concern -->
+<div class="modal-overlay" id="concern-modal">
+  <div class="modal">
+    <div class="modal-header">Add Concern</div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="form-group"><label>Date</label><input type="date" id="cm-date"></div>
+      <div class="form-group"><label>Pillar</label>
+        <select id="cm-pillar">
+          <option>Safety</option><option>Quality</option><option>Productivity</option><option>Cost</option>
+        </select>
+      </div>
+      <div class="form-group" style="grid-column:1/-1;"><label>Description</label><textarea id="cm-desc" rows="2"></textarea></div>
+      <div class="form-group"><label>Action Taken</label><input type="text" id="cm-action"></div>
+      <div class="form-group"><label>Person-in-Charge</label><input type="text" id="cm-pic"></div>
+      <div class="form-group"><label>Target Date</label><input type="date" id="cm-target"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="cm-status"><option>Open</option><option>Pending</option><option>Closed</option></select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveConcern()">Save Concern</button>
+      <button class="btn btn-outline" onclick="closeConcernModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION -->
+<div class="notif-bar" id="notif">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="notif-msg">Saved successfully!</span>
+</div>
+
+<script>
+// ============================================================
+// tiktaktow
+// ============================================================
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-PH',{hour12:true});
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ============================================================
+// navigations
+// ============================================================
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if(n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+page+"'")) n.classList.add('active');
+  });
+  if(page === 'records') renderRecords();
+  if(page === 'analytics') renderAnalytics();
+  if(page === 'concerns') renderConcerns();
+  if(page === 'attendance') renderAttendance();
+  if(page === 'qr') { generateQR(); }
+}
+
+// ============================================================
+// storage helper
+// ============================================================
+function getData(key) { try { return JSON.parse(localStorage.getItem(key)) || []; } catch(e) { return []; } }
+function setData(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+// ============================================================
+// dashboard
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date();
+  document.getElementById('dash-date-display').textContent = today.toLocaleDateString('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('entry-date').value = today.toISOString().slice(0,10);
+  document.getElementById('att-date').value = today.toISOString().slice(0,10);
+  document.getElementById('cm-date').value = today.toISOString().slice(0,10);
+  document.getElementById('cm-target').value = today.toISOString().slice(0,10);
+  const ym = today.toISOString().slice(0,7);
+  document.getElementById('filter-month').value = ym;
+  renderConcernCount();
+  renderDefaultAttendees();
+  generateQR();
+  // Load latest saved entry into dashboard
+  const allRecords = getData('ops_records');
+  if(allRecords.length) {
+    const latest = allRecords.sort((a,b) => b.date.localeCompare(a.date))[0];
+    updateKPIsFromEntry(latest);
+  }
+});
+
+// ============================================================
+// pillar tabs
+// ============================================================
+function switchPillar(name, el) {
+  document.querySelectorAll('.pillar-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.pillar-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+}
+
+// ============================================================
+// saving of data entry
+// ============================================================
+function saveEntry() {
+  const date = document.getElementById('entry-date').value;
+  if(!date) { showNotif('Please select a date first.', true); return; }
+  const records = getData('ops_records');
+  const idx = records.findIndex(r => r.date === date);
+  const entry = {
+    date, shift: document.getElementById('entry-shift').value,
+    prepby: document.getElementById('entry-prepby').value,
+    safety: {
+      manhrs: document.getElementById('s-manhrs').value,
+      obs: document.getElementById('s-obs').value,
+      closure: document.getElementById('s-closure').value,
+      lti: document.getElementById('s-lti').value,
+      mti: document.getElementById('s-mti').value,
+      fai: document.getElementById('s-fai').value,
+      dtp: document.getElementById('s-dtp').value,
+      nearmiss: document.getElementById('s-nearmiss').value,
+      permits: document.getElementById('s-permits').value,
+      shiftchange: document.getElementById('s-shiftchange').value,
+      cehs: document.getElementById('s-cehs').value,
+      project: document.getElementById('s-project').value,
+      nteIssued: document.getElementById('s-nte-issued').value,
+      nteClosure: document.getElementById('s-nte-closure').value,
+      people: document.getElementById('s-people').value,
+      concerns: document.getElementById('s-concerns').value,
+    },
+    quality: {
+      complaints: document.getElementById('q-complaints').value,
+      pctPlant: document.getElementById('q-pct-plant').value,
+      pctLog: document.getElementById('q-pct-log').value,
+      ncr: document.getElementById('q-ncr').value,
+      closure: document.getElementById('q-closure').value,
+      ipm: document.getElementById('q-ipm').value,
+      ipmClosure: document.getElementById('q-ipm-closure').value,
+      facility: document.getElementById('q-facility').value,
+      facilityClosure: document.getElementById('q-facility-closure').value,
+      spoilage: document.getElementById('q-spoilage').value,
+      bcReject: document.getElementById('q-bc-reject').value,
+      rmReject: document.getElementById('q-rm-reject').value,
+      pest: document.getElementById('q-pest').value,
+      eggyolk: document.getElementById('q-eggyolk').value,
+      eggwhite: document.getElementById('q-eggwhite').value,
+      foldin: document.getElementById('q-foldin').value,
+      panWashed: document.getElementById('q-pan-washed').value,
+      concerns: document.getElementById('q-concerns').value,
+    },
+    productivity: {
+      taG: document.getElementById('p-ta-g').value,
+      taR: document.getElementById('p-ta-r').value,
+      target: document.getElementById('p-target').value,
+      taC: document.getElementById('p-ta-c').value,
+      taS: document.getElementById('p-ta-s').value,
+      grp: document.getElementById('p-grp').value,
+      bufG: document.getElementById('p-buf-g').value,
+      bufP: document.getElementById('p-buf-p').value,
+      bmirk: document.getElementById('p-bmirk').value,
+      expedise: document.getElementById('p-expedise').value,
+      pcsG: document.getElementById('p-pcs-g').value,
+      pcsR: document.getElementById('p-pcs-r').value,
+      pcsP: document.getElementById('p-pcs-p').value,
+      pcsC: document.getElementById('p-pcs-c').value,
+      pcsS: document.getElementById('p-pcs-s').value,
+      pcsGrp: document.getElementById('p-pcs-grp').value,
+      dtG: document.getElementById('p-dt-g').value,
+      dtR: document.getElementById('p-dt-r').value,
+      dtP: document.getElementById('p-dt-p').value,
+      bl1: document.getElementById('p-bl1').value,
+      bl2: document.getElementById('p-bl2').value,
+      variance: document.getElementById('p-variance').value,
+      cpSupport: document.getElementById('p-cp-support').value,
+      concerns: document.getElementById('p-concerns').value,
+    },
+    cost: {
+      dm: document.getElementById('c-dm').value,
+      dl: document.getElementById('c-dl').value,
+      ot: document.getElementById('c-ot').value,
+      bcYield: document.getElementById('c-bc-yield').value,
+      ecYield: document.getElementById('c-ec-yield').value,
+      otdCMI: document.getElementById('c-otd-cmi').value,
+      otdCP: document.getElementById('c-otd-cp').value,
+      otdBP: document.getElementById('c-otd-bp').value,
+      otdOTA: document.getElementById('c-otd-ota').value,
+      otdOBC: document.getElementById('c-otd-obc').value,
+      concerns: document.getElementById('c-concerns').value,
+    },
+    savedAt: new Date().toISOString()
+  };
+  if(idx >= 0) { records[idx] = entry; } else { records.push(entry); }
+  setData('ops_records', records);
+  showNotif('Meeting record saved for ' + date + '!');
+  updateKPIsFromEntry(entry);
+}
+
+function updateKPIsFromEntry(e) {
+  // KPI main values
+  if(e.safety.manhrs) document.getElementById('kpi-safe-mh').textContent = e.safety.manhrs;
+  if(e.quality.complaints) document.getElementById('kpi-complaints').textContent = e.quality.complaints;
+  if(e.productivity.target) document.getElementById('kpi-prod').textContent = e.productivity.target;
+  if(e.cost.bcYield) document.getElementById('kpi-yield').textContent = e.cost.bcYield;
+
+  // KPI sub-texts
+  document.getElementById('kpi-safe-sub').textContent = `YTD | LTI: ${e.safety.lti||'—'} | MTI: ${e.safety.mti||'—'} | FAI: ${e.safety.fai||'—'}`;
+  document.getElementById('kpi-quality-sub').textContent = `%Closure: ${e.quality.closure||'—'} | NCR: ${e.quality.ncr||'—'}`;
+  document.getElementById('kpi-prod-sub').textContent = `GRP: ${e.productivity.grp||'—'} | PCS/MNHR: G ${e.productivity.pcsG||'—'}`;
+  document.getElementById('kpi-cost-sub').textContent = `%DM: ${e.cost.dm||'—'} | %DL: ${e.cost.dl||'—'} | %OT: ${e.cost.ot||'—'}`;
+
+  // Highlights row
+  const parts = [];
+  if(e.safety.shiftchange) parts.push('Shift Change — ' + e.safety.shiftchange);
+  if(e.quality.pest) parts.push('Pest Sighting: ' + e.quality.pest);
+  const otdParts = [
+    e.cost.otdCMI && 'CMI ' + e.cost.otdCMI,
+    e.cost.otdCP  && 'CP '  + e.cost.otdCP,
+    e.cost.otdBP  && 'BP '  + e.cost.otdBP,
+    e.cost.otdOTA && 'OTA ' + e.cost.otdOTA,
+    e.cost.otdOBC && 'OBC ' + e.cost.otdOBC
+  ].filter(Boolean);
+  if(otdParts.length) parts.push('OTD: ' + otdParts.join(', '));
+  if(e.safety.project) parts.push(e.safety.project);
+  document.getElementById('dash-highlights-text').innerHTML =
+    '<strong>Today\'s Meeting Highlights:</strong> ' + (parts.length ? parts.join(' | ') : 'No highlights recorded.');
+
+  // Process quality parameters with spec checking
+  const yolk   = parseFloat(e.quality.eggyolk);
+  const white  = parseFloat(e.quality.eggwhite);
+  const foldin = parseFloat(e.quality.foldin);
+
+  if(!isNaN(yolk)) {
+    const ok = yolk >= 0.90 && yolk <= 1.10;
+    document.getElementById('dash-eggyolk-val').textContent = yolk.toFixed(2);
+    document.getElementById('dash-eggyolk-val').style.color = ok ? 'var(--text)' : '#BF5000';
+    document.getElementById('dash-eggyolk-status').textContent = 'Target: 0.90 – 1.10 ' + (ok ? '✓' : '⚠ Out of spec');
+    document.getElementById('dash-eggyolk-status').style.color = ok ? 'var(--text-muted)' : '#BF5000';
+  }
+
+  if(!isNaN(white)) {
+    const ok = white >= 0.18 && white <= 0.22;
+    const card   = document.getElementById('dash-eggwhite-card');
+    const lbl    = document.getElementById('dash-eggwhite-label');
+    const val    = document.getElementById('dash-eggwhite-val');
+    const status = document.getElementById('dash-eggwhite-status');
+    card.style.background   = ok ? 'var(--green-pale)' : '#FFF3E0';
+    card.style.borderColor  = ok ? 'var(--green-light)' : '#FFE0B2';
+    lbl.style.color  = ok ? 'var(--green)' : '#BF5000';
+    val.textContent  = white.toFixed(2);
+    val.style.color  = ok ? 'var(--green)' : '#BF5000';
+    status.textContent = 'Target: 0.18 – 0.22 ' + (ok ? '✓' : '⚠ Out of spec');
+    status.style.color = ok ? 'var(--green)' : '#BF5000';
+  }
+
+  if(!isNaN(foldin)) {
+    const ok = foldin >= 0.38 && foldin <= 0.40;
+    document.getElementById('dash-foldin-val').textContent = foldin.toFixed(2);
+    document.getElementById('dash-foldin-val').style.color = ok ? 'var(--green)' : '#BF5000';
+    document.getElementById('dash-foldin-status').textContent = 'Target: 0.38 – 0.40 ' + (ok ? '✓' : '⚠ Out of spec');
+    document.getElementById('dash-foldin-status').style.color = ok ? 'var(--green)' : '#BF5000';
+  }
+}
+
+function clearEntry() {
+  document.querySelectorAll('#page-entry input, #page-entry select, #page-entry textarea').forEach(el => {
+    if(el.type === 'date') { el.value = new Date().toISOString().slice(0,10); }
+    else if(el.tagName === 'SELECT') { el.selectedIndex = 0; }
+    else { el.value = ''; }
+  });
+  showNotif('Form cleared.');
+}
+
+// ============================================================
+// records
+// ============================================================
+function renderRecords() {
+  const records = getData('ops_records');
+  const month = document.getElementById('filter-month').value;
+  const filtered = month ? records.filter(r => r.date.startsWith(month)) : records;
+  filtered.sort((a,b) => b.date.localeCompare(a.date));
+  const el = document.getElementById('records-list');
+  if(!filtered.length) { el.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:10px 0;">No records found for this period.</p>'; return; }
+  el.innerHTML = filtered.map((r,i) => `
+    <div class="history-item" onclick="showRecordDetail(${getData('ops_records').findIndex(x=>x.date===r.date)})">
+      <div class="history-date">${r.date}</div>
+      <div style="font-size:13px;font-weight:600;flex:1;">${r.shift} — ${r.prepby||'N/A'}</div>
+      <div class="history-pillars">
+        <span class="pillar-mini" style="background:var(--green-pale);color:var(--green);">🛡 S</span>
+        <span class="pillar-mini" style="background:#FFF3E0;color:#BF5000;">✅ Q</span>
+        <span class="pillar-mini" style="background:#E3F2FD;color:#0D47A1;">⚡ P</span>
+        <span class="pillar-mini" style="background:#F3E5F5;color:#6A1B9A;">💰 C</span>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteRecord(${getData('ops_records').findIndex(x=>x.date===r.date)})">✕</button>
+    </div>`).join('');
+}
+
+function showRecordDetail(idx) {
+  const records = getData('ops_records');
+  const r = records[idx]; if(!r) return;
+  document.getElementById('detail-title').textContent = 'Record: ' + r.date + ' — ' + r.shift;
+  document.getElementById('detail-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;color:var(--green);text-transform:uppercase;margin-bottom:8px;">🛡 Safety</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--green);text-transform:uppercase;margin:6px 0 4px;">YTD</div>
+        ${detailRow('Safe Man-Hrs',r.safety.manhrs)}${detailRow('LTI/MTI/FAI',r.safety.lti+'/'+r.safety.mti+'/'+r.safety.fai)}
+        ${detailRow('Observations',r.safety.obs)}${detailRow('% Closure',r.safety.closure)}
+        ${detailRow('Permits',r.safety.permits)}${detailRow('Shift Change',r.safety.shiftchange)}
+        ${detailRow('NTE Issued',r.safety.nteIssued)}${detailRow('NTE Closure',r.safety.nteClosure)}
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--green);text-transform:uppercase;margin:6px 0 4px;">Schedules</div>
+        ${detailRow('CEHS Audit',r.safety.cehs)}${detailRow('Project',r.safety.project)}
+        ${r.safety.concerns ? `<div style="margin-top:6px;font-size:12px;color:var(--text-muted);"><em>⚠ ${r.safety.concerns}</em></div>` : ''}
+      </div>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;color:#BF5000;text-transform:uppercase;margin-bottom:8px;">✅ Quality</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:#BF5000;text-transform:uppercase;margin:6px 0 4px;">YTD</div>
+        ${detailRow('Validated Complaints',r.quality.complaints)}${detailRow('% Plant / % Log',r.quality.pctPlant+' / '+r.quality.pctLog)}
+        ${detailRow('NCR',r.quality.ncr)}${detailRow('% Closure (NCR)',r.quality.closure)}
+        ${detailRow('IPM Incidents / Target',r.quality.ipm)}${detailRow('IPM % Closure',r.quality.ipmClosure)}
+        ${detailRow('Facility Inspection',r.quality.facility)}${detailRow('Facility Inspection % Closure',r.quality.facilityClosure)}
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:#BF5000;text-transform:uppercase;margin:6px 0 4px;">MTD</div>
+        ${detailRow('% Spoilage',r.quality.spoilage)}${detailRow('Basecakes Rejection',r.quality.bcReject+' kgs')}
+        ${detailRow('Raw Mats Rejection',r.quality.rmReject+' kgs')}
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:#BF5000;text-transform:uppercase;margin:6px 0 4px;">24 HRS</div>
+        ${detailRow('Pest Sightings',r.quality.pest)}${detailRow('Egg Yolk',r.quality.eggyolk)}
+        ${detailRow('Egg White',r.quality.eggwhite)}${detailRow('Fold In',r.quality.foldin)}
+        ${detailRow('% Pan Washed',r.quality.panWashed)}
+        ${r.quality.concerns ? `<div style="margin-top:6px;font-size:12px;color:var(--text-muted);"><em>⚠ ${r.quality.concerns}</em></div>` : ''}
+      </div>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;color:#0D47A1;text-transform:uppercase;margin-bottom:8px;">⚡ Productivity</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:#0D47A1;text-transform:uppercase;margin:6px 0 4px;">24 HRS — Target Achievement</div>
+        ${detailRow('G (Greetings)',r.productivity.taG)}${detailRow('R (Rolls)',r.productivity.taR)}
+        ${detailRow('P (Premium)',r.productivity.target)}${detailRow('C (Chiffon)',r.productivity.taC)}
+        ${detailRow('S (Sponge)',r.productivity.taS)}${detailRow('GRP',r.productivity.grp)}
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:#0D47A1;text-transform:uppercase;margin:6px 0 4px;">Basecakes Buffer</div>
+        ${detailRow('G',r.productivity.bufG)}${detailRow('P',r.productivity.bufP)}
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:#0D47A1;text-transform:uppercase;margin:6px 0 4px;">PCS/MNHR</div>
+        ${detailRow('G',r.productivity.pcsG)}${detailRow('R',r.productivity.pcsR)}
+        ${detailRow('P',r.productivity.pcsP)}${detailRow('C',r.productivity.pcsC)}
+        ${detailRow('S',r.productivity.pcsS)}${detailRow('GRP',r.productivity.pcsGrp)}
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:#0D47A1;text-transform:uppercase;margin:6px 0 4px;">Downtime</div>
+        ${detailRow('G',r.productivity.dtG)}${detailRow('R',r.productivity.dtR)}
+        ${detailRow('P',r.productivity.dtP)}${detailRow('BL1',r.productivity.bl1)}
+        ${detailRow('BL2',r.productivity.bl2)}
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:#0D47A1;text-transform:uppercase;margin:6px 0 4px;">Variance &amp; CP Support</div>
+        ${detailRow('Variance',r.productivity.variance)}${detailRow('CP Support',r.productivity.cpSupport)}
+        ${r.productivity.concerns ? `<div style="margin-top:6px;font-size:12px;color:var(--text-muted);"><em>⚠ ${r.productivity.concerns}</em></div>` : ''}
+      </div>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;color:#6A1B9A;text-transform:uppercase;margin-bottom:8px;">💰 Cost</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:#6A1B9A;text-transform:uppercase;margin:6px 0 4px;">MTD</div>
+        ${detailRow('%DM',r.cost.dm)}${detailRow('%DL',r.cost.dl)}${detailRow('%OT',r.cost.ot)}
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:#6A1B9A;text-transform:uppercase;margin:6px 0 4px;">24 HRS</div>
+        ${detailRow('Basecakes Yield',r.cost.bcYield)}${detailRow('Egg Cracking Yield',r.cost.ecYield)}
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:#6A1B9A;text-transform:uppercase;margin:6px 0 4px;">OTD (Target: 97%)</div>
+        ${detailRow('CMI',r.cost.otdCMI)}${detailRow('CP',r.cost.otdCP)}
+        ${detailRow('BP',r.cost.otdBP)}${detailRow('OTA',r.cost.otdOTA)}${detailRow('OBC',r.cost.otdOBC)}
+        ${r.cost.concerns ? `<div style="margin-top:6px;font-size:12px;color:var(--text-muted);"><em>⚠ ${r.cost.concerns}</em></div>` : ''}
+      </div>
+    </div>`;
+  document.getElementById('record-detail').style.display = 'block';
+  document.getElementById('record-detail').scrollIntoView({behavior:'smooth'});
+}
+
+function detailRow(label, val) {
+  if(!val || val === 'undefined' || val === '/') return '';
+  return `<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #f0f0e0;"><span style="color:var(--text-muted);">${label}</span><span style="font-weight:600;">${val||'—'}</span></div>`;
+}
+
+function deleteRecord(idx) {
+  if(!confirm('Delete this record?')) return;
+  const records = getData('ops_records');
+  records.splice(idx, 1);
+  setData('ops_records', records);
+  renderRecords();
+  showNotif('Record deleted.');
+}
+
+// ============================================================
+// concerns
+// ============================================================
+let allConcerns = [];
+
+function renderConcerns() {
+  allConcerns = getData('ops_concerns');
+  renderConcernTable(allConcerns);
+  renderConcernCount();
+}
+
+function renderConcernTable(list) {
+  const tbody = document.getElementById('concern-tbody');
+  if(!list.length) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:20px;">No concerns logged yet.</td></tr>'; return; }
+  tbody.innerHTML = list.map((c,i) => `<tr>
+    <td><span style="font-family:\'DM Mono\',monospace;font-size:11px;">${c.date}</span></td>
+    <td><span class="status-badge" style="background:${pillarBg(c.pillar)};color:${pillarColor(c.pillar)};">${c.pillar}</span></td>
+    <td style="max-width:220px;">${c.description}</td>
+    <td>${c.action||'—'}</td>
+    <td>${c.pic||'—'}</td>
+    <td>${c.targetDate||'—'}</td>
+    <td>
+      <select class="status-badge ${statusClass(c.status)}" style="border:none;background:transparent;cursor:pointer;font-size:10px;font-weight:700;" onchange="updateConcernStatus(${allConcerns.indexOf(c)},this.value)">
+        <option ${c.status==='Open'?'selected':''}>Open</option>
+        <option ${c.status==='Pending'?'selected':''}>Pending</option>
+        <option ${c.status==='Closed'?'selected':''}>Closed</option>
+      </select>
+    </td>
+    <td><button class="btn btn-danger btn-sm" onclick="deleteConcern(${allConcerns.indexOf(c)})">✕</button></td>
+  </tr>`).join('');
+}
+
+function pillarBg(p) { return {Safety:'#E8F5EB',Quality:'#FFF3E0',Productivity:'#E3F2FD',Cost:'#F3E5F5'}[p]||'#f0f0e0'; }
+function pillarColor(p) { return {Safety:'#1D6B2E',Quality:'#BF5000',Productivity:'#0D47A1',Cost:'#6A1B9A'}[p]||'#333'; }
+function statusClass(s) { return {Open:'status-open',Closed:'status-closed',Pending:'status-pending'}[s]||'status-open'; }
+
+function filterConcerns() {
+  const q = document.getElementById('concern-search').value.toLowerCase();
+  const p = document.getElementById('concern-filter-pillar').value;
+  const s = document.getElementById('concern-filter-status').value;
+  let list = allConcerns;
+  if(q) list = list.filter(c => c.description.toLowerCase().includes(q) || (c.action||'').toLowerCase().includes(q));
+  if(p) list = list.filter(c => c.pillar === p);
+  if(s) list = list.filter(c => c.status === s);
+  renderConcernTable(list);
+}
+
+function openConcernModal() { document.getElementById('concern-modal').classList.add('open'); }
+function closeConcernModal() { document.getElementById('concern-modal').classList.remove('open'); }
+
+function saveConcern() {
+  const concerns = getData('ops_concerns');
+  concerns.push({
+    date: document.getElementById('cm-date').value,
+    pillar: document.getElementById('cm-pillar').value,
+    description: document.getElementById('cm-desc').value,
+    action: document.getElementById('cm-action').value,
+    pic: document.getElementById('cm-pic').value,
+    targetDate: document.getElementById('cm-target').value,
+    status: document.getElementById('cm-status').value,
+  });
+  setData('ops_concerns', concerns);
+  closeConcernModal();
+  renderConcerns();
+  showNotif('Concern added!');
+}
+
+function deleteConcern(idx) {
+  if(!confirm('Delete concern?')) return;
+  const concerns = getData('ops_concerns');
+  concerns.splice(idx,1);
+  setData('ops_concerns', concerns);
+  renderConcerns();
+  showNotif('Concern deleted.');
+}
+
+function updateConcernStatus(idx, val) {
+  const concerns = getData('ops_concerns');
+  if(concerns[idx]) { concerns[idx].status = val; setData('ops_concerns', concerns); renderConcerns(); showNotif('Status updated.'); }
+}
+
+function renderConcernCount() {
+  const concerns = getData('ops_concerns');
+  const open = concerns.filter(c => c.status !== 'Closed').length;
+  const el = document.getElementById('concern-count');
+  if(el) el.textContent = open;
+  const el2 = document.getElementById('dash-concerns-list');
+  if(el2) {
+    const active = concerns.filter(c => c.status !== 'Closed').slice(0,4);
+    if(!active.length) { el2.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">All concerns resolved!</p>'; return; }
+    el2.innerHTML = active.map(c => `
+      <div class="concern-item ${c.pillar.toLowerCase()}">
+        <div>
+          <div class="concern-text">${c.description}</div>
+          <div class="concern-meta">${c.pillar} · ${c.targetDate||''} · PIC: ${c.pic||'—'}</div>
+        </div>
+        <span class="status-badge ${statusClass(c.status)}">${c.status}</span>
+      </div>`).join('');
+  }
+}
+
+// ============================================================
+// attendance
+// ============================================================
+const DEFAULT_ATTENDEES = [
+  {name:'Plant Manager',dept:'Management',role:'Head'},
+  {name:'Production Manager 2',dept:'Production',role:'Manager'},
+  {name:'QA Manager',dept:'Quality Assurance',role:'Manager'},
+  {name:'Safety Officer',dept:'Safety',role:'Officer'},
+  {name:'Engineering Head',dept:'Engineering',role:'Head'},
+  {name:'Logistics Head',dept:'Logistics',role:'Head'},
+  {name:'HR Manager',dept:'Human Resources',role:'Manager'},
+  {name:'Sanitations Head',dept:'Sanitation',role:'Head'},
+  {name:'B-MIRK Coordinator',dept:'Agency',role:'Coordinator'},
+  {name:'EXPEDISE Coordinator',dept:'Agency',role:'Coordinator'}
+];
+
+function renderDefaultAttendees() {
+  const stored = getData('att_people');
+  // Always sync: keep any manually added extra people, but ensure defaults are correct
+  const defaultNames = DEFAULT_ATTENDEES.map(p => p.name);
+  const extras = stored.filter(p => !defaultNames.includes(p.name));
+  const synced = DEFAULT_ATTENDEES.map(d => {
+    const existing = stored.find(p => p.name === d.name);
+    return existing ? {...d, present: existing.present} : {...d, present: false};
+  });
+  setData('att_people', [...synced, ...extras]);
+  renderAttendance();
+}
+
+function resetAttendees() {
+  if(!confirm('Reset attendance list to defaults? This will remove any manually added attendees.')) return;
+  setData('att_people', DEFAULT_ATTENDEES.map(p => ({...p, present: false})));
+  renderAttendance();
+  showNotif('Attendance list reset to defaults.');
+}
+
+function renderAttendance() {
+  const people = getData('att_people');
+  const grid = document.getElementById('att-grid');
+  if(!grid) return;
+  let presentCount = 0;
+  grid.innerHTML = people.map((p,i) => {
+    if(p.present) presentCount++;
+    return `<div class="att-card ${p.present?'present':'absent'}" onclick="toggleAttendance(${i})">
+      <div class="att-name">${p.name}</div>
+      <div class="att-dept">${p.dept}</div>
+      <div class="att-status">${p.present?'✓ Present':'✕ Absent'}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('att-present-count').textContent = presentCount + ' present';
+}
+
+function toggleAttendance(idx) {
+  const people = getData('att_people');
+  people[idx].present = !people[idx].present;
+  setData('att_people', people);
+  renderAttendance();
+}
+
+function addAttendee() {
+  const name = document.getElementById('att-new-name').value.trim();
+  const dept = document.getElementById('att-new-dept').value.trim();
+  const role = document.getElementById('att-new-role').value.trim();
+  if(!name) { showNotif('Please enter a name.'); return; }
+  const people = getData('att_people');
+  people.push({name, dept, role, present:false});
+  setData('att_people', people);
+  document.getElementById('att-new-name').value = '';
+  document.getElementById('att-new-dept').value = '';
+  document.getElementById('att-new-role').value = '';
+  renderAttendance();
+  showNotif(name + ' added!');
+}
+
+function saveAttendance() {
+  const people = getData('att_people');
+  const date = document.getElementById('att-date').value;
+  const records = getData('att_records');
+  const idx = records.findIndex(r => r.date === date);
+  const snapshot = { date, people: JSON.parse(JSON.stringify(people)), savedAt: new Date().toISOString() };
+  if(idx >= 0) records[idx] = snapshot; else records.push(snapshot);
+  setData('att_records', records);
+  showNotif('Attendance saved for ' + date + '!'); renderAttendanceHistory();
+}
+
+// ============================================================
+// qr code
+// ============================================================
+
+function renderAttendanceHistory(){
+  const body = document.getElementById('attendance-history-body');
+  if(!body) return;
+  const records = getData('att_records') || [];
+  body.innerHTML = '';
+  records.sort((a,b)=>b.date.localeCompare(a.date));
+  records.forEach(r=>{
+    const present = (r.people||[]).filter(p=>p.present).length;
+    const absent = (r.people||[]).length - present;
+    body.innerHTML += `<tr>
+      <td>${r.date}</td>
+      <td>${present}</td>
+      <td>${absent}</td>
+      <td>${new Date(r.savedAt).toLocaleString()}</td>
+    </tr>`;
+  });
+}
+
+let qrInstance = null;
+
+function generateQR() {
+  const qrDiv = document.getElementById('qrcode');
+  qrDiv.innerHTML = '';
+  const type = document.getElementById('qr-type') ? document.getElementById('qr-type').value : 'meeting';
+  const custom = document.getElementById('qr-custom') ? document.getElementById('qr-custom').value : '';
+  document.getElementById('qr-custom-wrap').style.display = (type === 'custom') ? 'flex' : 'none';
+  let content = '';
+  const date = new Date().toLocaleDateString('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  if(type === 'meeting') {
+    const records = getData('ops_records');
+    const latest = records.sort((a,b)=>b.date.localeCompare(a.date))[0];
+    if(latest) {
+      content = `CLARMIL MANUFACTURING INC.\nOPS MEETING — ${latest.date}\nShift: ${latest.shift}\nSafety: LTI=${latest.safety.lti||0}, Safe ManHrs=${latest.safety.manhrs||'N/A'}\nQuality: Complaints=${latest.quality.complaints||'N/A'}, Closure=${latest.quality.closure||'N/A'}\nProductivity: Target=${latest.productivity.target||'N/A'}\nCost: BC Yield=${latest.cost.bcYield||'N/A'}\nGenerated: ${new Date().toLocaleString('en-PH')}`;
+    } else {
+      content = `CLARMIL MANUFACTURING INC.\nOperations Meeting System\nDate: ${date}\nNo records saved yet.`;
+    }
+  } else if(type === 'custom') {
+    content = custom || 'CLARMIL Manufacturing Incorporated';
+  } else {
+    content = `CLARMIL OPS MEETING — Concerns Log\nDate: ${date}`;
+  }
+  try {
+    qrInstance = new QRCode(qrDiv, {
+      text: content, width: 180, height: 180,
+      colorDark: '#1D6B2E', colorLight: '#FFFBE0',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch(e) { qrDiv.innerHTML = '<p style="color:#c00;font-size:12px;">QR library not loaded. Check internet connection.</p>'; }
+  const label = document.getElementById('qr-label') ? document.getElementById('qr-label').value : '';
+  document.getElementById('qr-label-display').textContent = label || 'CLARMIL MANUFACTURING — OPS MEETING';
+}
+
+function updateQRPreview() { generateQR(); }
+
+function downloadQR() {
+  const canvas = document.querySelector('#qrcode canvas');
+  if(!canvas) { showNotif('Generate a QR first.'); return; }
+  const link = document.createElement('a');
+  link.download = 'CLARMIL_OPS_QR_' + new Date().toISOString().slice(0,10) + '.png';
+  link.href = canvas.toDataURL();
+  link.click();
+  showNotif('QR code downloaded!');
+}
+
+// ============================================================
+// analytics (need ngani irevise)
+// ============================================================
+function renderAnalytics() {
+  const records = getData('ops_records').sort((a,b)=>a.date.localeCompare(b.date)).slice(-10);
+  if(!records.length) return;
+  drawSimpleChart('chart-safety', records.map(r=>r.date.slice(5)), records.map(r=>parseFloat(r.safety.lti||0)), '#1D6B2E', 'LTI');
+  drawSimpleChart('chart-quality', records.map(r=>r.date.slice(5)), records.map(r=>parseFloat(r.quality.complaints)||0), '#E07B00', 'Complaints');
+  drawSimpleChart('chart-productivity', records.map(r=>r.date.slice(5)), records.map(r=>parseFloat(r.productivity.target)||0), '#1565C0', 'Target %');
+  const stats = document.getElementById('analytics-stats');
+  stats.innerHTML = `<div class="form-grid three">
+    <div><strong>Total Records:</strong> ${records.length}</div>
+    <div><strong>Latest Date:</strong> ${records[records.length-1].date}</div>
+    <div><strong>Avg Productivity:</strong> ${(records.reduce((s,r)=>s+(parseFloat(r.productivity.target)||0),0)/records.length).toFixed(1)}%</div>
+  </div>`;
+}
+
+function drawSimpleChart(id, labels, data, color, title) {
+  const canvas = document.getElementById(id);
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+  if(!data.length) return;
+  const maxV = Math.max(...data, 1);
+  const pad = {top:20,right:10,bottom:30,left:40};
+  const chartW = W - pad.left - pad.right;
+  const chartH = H - pad.top - pad.bottom;
+  ctx.fillStyle = '#FFFBE0'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle = '#E8E0B0'; ctx.lineWidth = 1;
+  for(let i=0;i<=4;i++) {
+    const y = pad.top + chartH - (chartH * i / 4);
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+chartW,y); ctx.stroke();
+    ctx.fillStyle = '#999'; ctx.font = '9px Inter'; ctx.textAlign = 'right';
+    ctx.fillText((maxV*i/4).toFixed(0), pad.left-3, y+3);
+  }
+  if(data.length > 1) {
+    ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2;
+    data.forEach((v,i) => {
+      const x = pad.left + (i/(data.length-1)) * chartW;
+      const y = pad.top + chartH - (v/maxV)*chartH;
+      i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    // Fill
+    ctx.lineTo(pad.left + chartW, pad.top+chartH);
+    ctx.lineTo(pad.left, pad.top+chartH);
+    ctx.closePath();
+    ctx.fillStyle = color + '22'; ctx.fill();
+    // Dots
+    data.forEach((v,i) => {
+      const x = pad.left + (i/(data.length-1)) * chartW;
+      const y = pad.top + chartH - (v/maxV)*chartH;
+      ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2);
+      ctx.fillStyle = color; ctx.fill();
+    });
+  }
+  ctx.fillStyle = color; ctx.font = 'bold 10px Inter'; ctx.textAlign = 'center';
+  ctx.fillText(title, W/2, 12);
+  labels.forEach((l,i) => {
+    const x = pad.left + (data.length>1 ? (i/(data.length-1)) * chartW : chartW/2);
+    ctx.fillStyle = '#888'; ctx.font = '8px Inter'; ctx.textAlign = 'center';
+    ctx.fillText(l, x, H-4);
+  });
+}
+
+// ============================================================
+// export through file
+// ============================================================
+function exportCSV() {
+  const records = getData('ops_records');
+  if(!records.length) { showNotif('No records to export.'); return; }
+  const headers = ['Date','Shift','Prepared By','Safe Man-Hrs','LTI','MTI','FAI','Observations','%Closure Safety','Complaints','NCR','%Closure Quality','%Spoilage','Egg Yolk','Egg White','Fold In','Target Achievement','GRP','Basecakes Buffer G','PCS/MNHR G','%DM','%DL','%OT','Basecakes Yield','Egg Cracking Yield','OTD CMI'];
+  const rows = records.map(r => [
+    r.date, r.shift, r.prepby,
+    r.safety.manhrs, r.safety.lti, r.safety.mti, r.safety.fai, r.safety.obs, r.safety.closure,
+    r.quality.complaints, r.quality.ncr, r.quality.closure, r.quality.spoilage, r.quality.eggyolk, r.quality.eggwhite, r.quality.foldin,
+    r.productivity.target, r.productivity.grp, r.productivity.bufG, r.productivity.pcsG,
+    r.cost.dm, r.cost.dl, r.cost.ot, r.cost.bcYield, r.cost.ecYield, r.cost.otdCMI
+  ].map(v => `"${v||''}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  downloadFile('CLARMIL_OPS_Records.csv', 'text/csv', csv);
+  showNotif('CSV exported!');
+}
+
+function exportJSON() {
+  const data = { records: getData('ops_records'), concerns: getData('ops_concerns'), exported: new Date().toISOString(), company: 'CLARMIL Manufacturing Inc.' };
+  downloadFile('CLARMIL_OPS_Data.json', 'application/json', JSON.stringify(data, null, 2));
+  showNotif('JSON exported!');
+}
+
+function exportFiltered() {
+  const from = document.getElementById('exp-from').value;
+  const to = document.getElementById('exp-to').value;
+  if(!from || !to) { showNotif('Select a date range.'); return; }
+  const records = getData('ops_records').filter(r => r.date >= from && r.date <= to);
+  const data = { records, range:{from,to}, exported: new Date().toISOString() };
+  downloadFile(`CLARMIL_OPS_${from}_to_${to}.json`, 'application/json', JSON.stringify(data, null, 2));
+  showNotif('Filtered export done!');
+}
+
+function downloadFile(filename, type, content) {
+  const blob = new Blob([content], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function printReport() { window.print(); }
+
+// ============================================================
+// notifs
+// ============================================================
+function showNotif(msg, isError=false) {
+  const el = document.getElementById('notif');
+  document.getElementById('notif-msg').textContent = msg;
+  el.style.background = isError ? '#C62828' : 'var(--green)';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ============================================================
+// load latest record
+// ============================================================
+function loadLatestIntoForm() {
+  const records = getData('ops_records');
+  if(!records.length) return;
+  const latest = records.sort((a,b)=>b.date.localeCompare(a.date))[0];
+  // prefill safety
+  Object.entries(latest.safety).forEach(([k,v]) => {
+    const mapping = {manhrs:'s-manhrs',obs:'s-obs',closure:'s-closure',lti:'s-lti',mti:'s-mti',fai:'s-fai',dtp:'s-dtp',nearmiss:'s-nearmiss',permits:'s-permits',shiftchange:'s-shiftchange',cehs:'s-cehs',project:'s-project',nteIssued:'s-nte-issued',nteClosure:'s-nte-closure',people:'s-people',concerns:'s-concerns'};
+    if(mapping[k]) { const el = document.getElementById(mapping[k]); if(el) el.value = v||''; }
+  });
+}
+</script>
+</body>
+</html>
